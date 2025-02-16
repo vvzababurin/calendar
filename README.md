@@ -1,2 +1,2 @@
-# calrndar
+# calendar
 Date calculator
