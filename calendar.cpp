@@ -66,10 +66,10 @@ char getch(void)
 #endif
 
 #ifdef _MYUNICODE 
-    #define _WT(c) L##c
-    #define WTEXT(c) L##c
+	#define _WT(c) L##c
+	#define WTEXT(c) L##c
 
-    typedef wchar_t WTCHAR;
+	typedef wchar_t WTCHAR;
 
 #ifdef _WIN32
 	#define _wtsprintf wsprintf
@@ -86,10 +86,10 @@ char getch(void)
 #endif
 
 #else 
-    #define _WT(c) c
-    #define WTEXT(c) c
+	#define _WT(c) c
+	#define WTEXT(c) c
 
-    typedef char WTCHAR;
+	typedef char WTCHAR;
 
 #ifdef _WIN32
 	#define _wtsprintf sprintf
