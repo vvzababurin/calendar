@@ -28,10 +28,10 @@ void activateVirtualTerminal()
 {       
 	HANDLE handleOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD consoleMode;
-        GetConsoleMode( handleOut , &consoleMode);
-        consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-        consoleMode |= DISABLE_NEWLINE_AUTO_RETURN;            
-        SetConsoleMode( handleOut , consoleMode );
+	GetConsoleMode( handleOut , &consoleMode);
+	consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	consoleMode |= DISABLE_NEWLINE_AUTO_RETURN;            
+	SetConsoleMode( handleOut , consoleMode );
 }
 #else 
 
@@ -42,24 +42,24 @@ void activateVirtualTerminal()
 
 char getch(void)
 {
-    char buf = 0;
-    struct termios old = {0};
-    fflush(stdout);
-    if(tcgetattr(0, &old) < 0)
-        perror("tcsetattr()");
-    old.c_lflag &= ~ICANON;
-    old.c_lflag &= ~ECHO;
-    old.c_cc[VMIN] = 1;
-    old.c_cc[VTIME] = 0;
-    if(tcsetattr(0, TCSANOW, &old) < 0)
-        perror("tcsetattr ICANON");
-    if(read(0, &buf, 1) < 0)
-        perror("read()");
-    old.c_lflag |= ICANON;
-    old.c_lflag |= ECHO;
-    if(tcsetattr(0, TCSADRAIN, &old) < 0)
-        perror("tcsetattr ~ICANON");
-    return buf;
+	char buf = 0;
+	struct termios old = {0};
+	fflush(stdout);
+	if(tcgetattr(0, &old) < 0)
+		perror("tcsetattr()");
+	old.c_lflag &= ~ICANON;
+	old.c_lflag &= ~ECHO;
+	old.c_cc[VMIN] = 1;
+	old.c_cc[VTIME] = 0;
+	if(tcsetattr(0, TCSANOW, &old) < 0)
+		perror("tcsetattr ICANON");
+	if(read(0, &buf, 1) < 0)
+		perror("read()");
+	old.c_lflag |= ICANON;
+	old.c_lflag |= ECHO;
+	if(tcsetattr(0, TCSADRAIN, &old) < 0)
+		perror("tcsetattr ~ICANON");
+	return buf;
  }
 
 
@@ -107,17 +107,16 @@ char getch(void)
 
 #endif
 
-
 enum COLORS {
-    NC=-1,
-    BLACK,
-    RED,
-    GREEN,
-    YELLOW,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    WHITE,
+	NC=-1,
+	BLACK,
+	RED,
+	GREEN,
+	YELLOW,
+	BLUE,
+	MAGENTA,
+	CYAN,
+	WHITE,
 };
 
 /**
@@ -134,28 +133,22 @@ const WTCHAR *colorize(int font, bool fintensity = false, int back = -1, bool bi
 {
     static WTCHAR code[20];
     
-    if (font >= 0)
-        font += 30;
-    else
-        font = 0;
+    if (font >= 0) font += 30;
+        else font = 0;
 
-	if ( fintensity )
-		font += 60;
+    if ( fintensity ) font += 60;
 
-    if (back >= 0)
-        back += 40;
-    else
-        back = 0;
+    if (back >= 0) back += 40;
+	else back = 0;
 
-	if ( bintensity )
-		back += 60;
+    if ( bintensity ) back += 60;
 
     if (back > 0 && style > 0) {
-        _wtsprintf(code, _WT("\033[%d;%d;%dm"), font, back, style);
+        _wtsprintf( code, _WT("\033[%d;%d;%dm"), font, back, style );
     } else if (back > 0) {
-        _wtsprintf(code, _WT("\033[%d;%dm"), font, back);
+        _wtsprintf( code, _WT("\033[%d;%dm"), font, back );
     } else {
-        _wtsprintf(code, _WT("\033[%dm"), font);
+        _wtsprintf( code, _WT("\033[%dm"), font );
     }
 
     return code;
@@ -171,9 +164,9 @@ void calendar()
     int sd = -1;
     int sm = -1;
     int dw = -1;
-    int cd = 0;
     int ef = -1;
     int dd = -1;
+    int cd = 0;
     int v29 = 0;
 
     int vvy = 0;
@@ -195,21 +188,20 @@ loop:
     dw = -1;
     ef = -1;
     cd = 0;
-
     v29 = 0;
 
     vvy = 0;
     nvy = 0;
 
-    ///////////////////////////////////////////////////
-    // начало от рождения
-    ///////////////////////////////////////////////////
-
     dc = 0;
 
     wch = 'y';
 
-    _wtprintf( _WT("Искомый день недели ( -1 любой ): ") );
+    ///////////////////////////////////////////////////
+    // начало от рождения
+    ///////////////////////////////////////////////////
+
+    _wtprintf( _WT("Искомый день недели ( -1 - любой, понедельник - 1, вторник - 2, среда - 3 и т.д. ): ") );
     _wtscanf( _WT("%d"), &dw );
 
     _wtprintf( _WT("Количество дней с даты ( -1 всё равно ): ") );
@@ -294,91 +286,90 @@ loop:
             if ( ef == 1 ) cd = cd + 1;
 
             if ( ( ( dw == dayofweek || dw == -1 ) &&
-				( sy == i || sy == -1 ) && 
-				( sm == monthofyear || sm == -1 ) &&
-				( sd == dayofmonth || sd == -1 ) ) || ( dd == cd ) ) 
+                ( sy == i || sy == -1 ) && 
+		( sm == monthofyear || sm == -1 ) &&
+		( sd == dayofmonth || sd == -1 ) ) || ( dd == cd ) ) 
             {
             
-				ef = 1;
+			ef = 1;
 
-				_wtprintf( colorize( WHITE, true ) );
+			_wtprintf( colorize( WHITE, true ) );
 
-				if ( dd == cd )  _wtprintf( _WT("%u дней с вышеуказанной даты это: \n"), dd );
-						   
-				_wtprintf( colorize( WHITE, true ) );
+			if ( dd == cd )  _wtprintf( _WT("%u дней с вышеуказанной даты это: \n"), dd );
+					   
+			_wtprintf( colorize( WHITE, true ) );
 
-				_wtprintf( _WT("%02u "), dayofmonth );
+			_wtprintf( _WT("%02u "), dayofmonth );
 
-				_wtprintf( colorize( GREEN, true ) );
+			_wtprintf( colorize( GREEN, true ) );
 
-				if ( dayofmonth % 4 == 2 ) _wtprintf( _WT("( день ферма ) ") );
+			if ( dayofmonth % 4 == 2 ) _wtprintf( _WT("( день ферма ) ") );
 
-				_wtprintf( colorize( WHITE, true ) );
+			_wtprintf( colorize( WHITE, true ) );
 
-				if ( monthofyear == 0 ) _wtprintf( _WT("января ") );
-				if ( monthofyear == 1 ) _wtprintf( _WT("февраля ") );
-				if ( monthofyear == 2 ) _wtprintf( _WT("марта ") );
-				if ( monthofyear == 3 ) _wtprintf( _WT("апреля ") );
-				if ( monthofyear == 4 ) _wtprintf( _WT("мая ") );
-				if ( monthofyear == 5 ) _wtprintf( _WT("июня ") );
-				if ( monthofyear == 6 ) _wtprintf( _WT("июля ") );
-				if ( monthofyear == 7 ) _wtprintf( _WT("августа ") );
-				if ( monthofyear == 8 ) _wtprintf( _WT("сентября ") );
-				if ( monthofyear == 9 ) _wtprintf( _WT("октября ") );
-				if ( monthofyear == 10 ) _wtprintf( _WT("ноября ") );
-				if ( monthofyear == 11 ) _wtprintf( _WT("декабря ") );
+			if ( monthofyear == 0 ) _wtprintf( _WT("января ") );
+			if ( monthofyear == 1 ) _wtprintf( _WT("февраля ") );
+			if ( monthofyear == 2 ) _wtprintf( _WT("марта ") );
+			if ( monthofyear == 3 ) _wtprintf( _WT("апреля ") );
+			if ( monthofyear == 4 ) _wtprintf( _WT("мая ") );
+			if ( monthofyear == 5 ) _wtprintf( _WT("июня ") );
+			if ( monthofyear == 6 ) _wtprintf( _WT("июля ") );
+			if ( monthofyear == 7 ) _wtprintf( _WT("августа ") );
+			if ( monthofyear == 8 ) _wtprintf( _WT("сентября ") );
+			if ( monthofyear == 9 ) _wtprintf( _WT("октября ") );
+			if ( monthofyear == 10 ) _wtprintf( _WT("ноября ") );
+			if ( monthofyear == 11 ) _wtprintf( _WT("декабря ") );
 
-				_wtprintf( colorize( RED, true ) );
+			_wtprintf( colorize( RED, true ) );
 
-				if ( ( monthofyear + 1 ) % 4 == 2 ) _wtprintf( _WT("( месяц ферма ) ") );
+			if ( ( monthofyear + 1 ) % 4 == 2 ) _wtprintf( _WT("( месяц ферма ) ") );
 
-				_wtprintf( colorize( WHITE, true ) );
+			_wtprintf( colorize( WHITE, true ) );
 
-				if ( dayofweek == 0 ) _wtprintf( _WT("понедельник %04u"), i );
-				if ( dayofweek == 1 ) _wtprintf( _WT("вторник %04u"), i );
-				if ( dayofweek == 2 ) _wtprintf( _WT("среда %04u"), i );
-				if ( dayofweek == 3 ) _wtprintf( _WT("четверг %04u"), i );
-				if ( dayofweek == 4 ) _wtprintf( _WT("пятница %04u"), i );
-				if ( dayofweek == 5 ) _wtprintf( _WT("суббота %04u"), i );
-				if ( dayofweek == 6 ) _wtprintf( _WT("воскресенье %04u"), i );
+			if ( dayofweek == 0 ) _wtprintf( _WT("понедельник %04u"), i );
+			if ( dayofweek == 1 ) _wtprintf( _WT("вторник %04u"), i );
+			if ( dayofweek == 2 ) _wtprintf( _WT("среда %04u"), i );
+			if ( dayofweek == 3 ) _wtprintf( _WT("четверг %04u"), i );
+			if ( dayofweek == 4 ) _wtprintf( _WT("пятница %04u"), i );
+			if ( dayofweek == 5 ) _wtprintf( _WT("суббота %04u"), i );
+			if ( dayofweek == 6 ) _wtprintf( _WT("воскресенье %04u"), i );
+				_wtprintf( colorize( YELLOW, true ) );
 
-				_wtprintf( colorize( YELLOW, true ) );
-
-				if ( i % 4 == 2 ) 
-					_wtprintf( _WT(" ( год ферма )\n") );
+			if ( i % 4 == 2 ) 
+			_wtprintf( _WT(" ( год ферма )\n") );
 				else
-					_wtprintf( _WT("\n") );
+			_wtprintf( _WT("\n") );
 
-				_wtprintf( colorize( YELLOW, true ) );
+			_wtprintf( colorize( YELLOW, true ) );
 
-				_wtprintf( _WT("%08u день от рождества христова, день года %03u, %04u год\n"), dc, j, i );
+			_wtprintf( _WT("%08u день от рождества христова, день года %03u, %04u год\n"), dc, j, i );
 
-				_wtprintf( colorize( WHITE, true ) );
+			_wtprintf( colorize( WHITE, true ) );
 
-				int mt = i * 12 + (monthofyear + 1);
+			int mt = i * 12 + (monthofyear + 1);
 
-				_wtprintf( _WT("%08u - %s"), mt, _WT("месяц") );
+			_wtprintf( _WT("%08u - %s"), mt, _WT("месяц") );
 
-				_wtprintf( colorize( BLUE, true ) );
+			_wtprintf( colorize( BLUE, true ) );
 
-				if (mt % 4 == 2)
-					_wtprintf( _WT(" ( месяц ферма )\n") );
-				else
+			if (mt % 4 == 2)
+				_wtprintf( _WT(" ( месяц ферма )\n") );
+			else
 
-				_wtprintf(_WT("\n"));
+			_wtprintf(_WT("\n"));
 
-				_wtprintf( colorize( CYAN, true ) );
+			_wtprintf( colorize( CYAN, true ) );
 
-				if (v29 == 1)
-					_wtprintf(_WT("%04u - високосный\n"), i);
-				else
-					_wtprintf(_WT("%04u - не високосный\n"), i);
-				
-				_wtprintf( colorize( MAGENTA, true ) );
+			if (v29 == 1)
+				_wtprintf(_WT("%04u - високосный\n"), i);
+			else
+				_wtprintf(_WT("%04u - не високосный\n"), i);
+			
+			_wtprintf( colorize( MAGENTA, true ) );
 
-				if ( dc % 4 == 2 ) _wtprintf( _WT("%08u - %s\n"), dc, _WT("день ферма от рождества христова"));
+			if ( dc % 4 == 2 ) _wtprintf( _WT("%08u - %s\n"), dc, _WT("день ферма от рождества христова"));
 
-				_wtprintf( _WT("\n") );
+			_wtprintf( _WT("\n") );
 		}
         
 		( dayofweek == 6 ) ? dayofweek = 0 : dayofweek++;
@@ -387,27 +378,27 @@ loop:
 
 	_wtprintf( colorize( WHITE, true ) );
 
-    _wtprintf( _WT("Итого, включая ( %04u ):\n"), maxyear );
-    _wtprintf( _WT("Високосных %u лет\n"), vvy );
-    _wtprintf( _WT("Не високосных %u лет\n"), nvy );
+	_wtprintf( _WT("Итого, включая ( %04u ):\n"), maxyear );
+	_wtprintf( _WT("Високосных %u лет\n"), vvy );
+	_wtprintf( _WT("Не високосных %u лет\n"), nvy );
 
-    _wtprintf( _WT("\n") );
+	_wtprintf( _WT("\n") );
 
 loop2:
-    _wtprintf( _WT("Повторить раcчёт? ( y/n ): ") );
+	_wtprintf( _WT("Повторить раcчёт? ( y/n ): ") );
 
-    wch = _wtgetch();  
- 	wch = _wtoupper( wch );
+	wch = _wtgetch();  
+	wch = _wtoupper( wch );
 
-    _wtprintf( _WT("%c\n"), wch, 1);
-    _wtprintf( _WT("\n") );
+	_wtprintf( _WT("%c\n"), wch, 1);
+	_wtprintf( _WT("\n") );
 
-    if ( wch == 'Y' || wch == 'y' ) goto loop;
-    if ( wch == 'N' || wch == 'n' ) return;
+	if ( wch == 'Y' || wch == 'y' ) goto loop;
+	if ( wch == 'N' || wch == 'n' ) return;
 
-    _wtscanf( _WT("%*[^\r\n]") );
+	_wtscanf( _WT("%*[^\r\n]") );
 
-    goto loop2;
+	goto loop2;
 }
 
 /*
