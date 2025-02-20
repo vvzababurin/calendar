@@ -30,4 +30,12 @@
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="translate\en-EN.lang">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="translate\ru-RU.lang">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+  </ItemGroup>
 </Project>

@@ -15,6 +15,7 @@
 
 #define _MYUNICODE
 
+
 #ifdef _WIN32
 
 #include <io.h>
@@ -77,12 +78,14 @@ char getch(void)
 	#define _wtscanf wscanf_s
 	#define _wtgetch _getch
 	#define _wtoupper towupper
+	#define _wtopen _wfopen
 #else
 	#define _wtsprintf sprintf
 	#define _wtprintf printf
 	#define _wtscanf scanf
 	#define _wtgetch getch
 	#define _wtoupper toupper
+	#define _wtopen fopen
 #endif
 
 #else 
@@ -97,15 +100,73 @@ char getch(void)
 	#define _wtscanf scanf_s
 	#define _wtgetch _getch
 	#define _wtoupper toupper
+	#define _wtopen fopen
 #else
 	#define _wtsprintf sprintf
 	#define _wtprintf printf
 	#define _wtscanf scanf
 	#define _wtgetch getch
 	#define _wtoupper toupper
+	#define _wtopen fopen
 #endif
 
 #endif
+
+//////////////////////////////////////////////////////
+// TODO: translate to other lang 
+//////////////////////////////////////////////////////
+void loadLocaleLang()
+{
+		static WTCHAR filename[256];
+
+#ifdef _WIN32
+	#ifdef _MYUNICODE
+		int nLocaleInfo = GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, 0, 0);
+	#else
+		int nLocaleInfo = GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, 0, 0);
+	#endif
+		if (nLocaleInfo > 0) {
+			WTCHAR* buff = (WTCHAR*)malloc((nLocaleInfo + 1) * sizeof(WTCHAR));
+	#ifdef _MYUNICODE			
+			GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
+	#else
+			GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
+	#endif
+			_wtsprintf(filename, _WT("translate/%s.lang"), buff);
+
+			free(buff);
+		}
+#else
+		char* buff = getenv("LANG");
+
+		char* ch = buff;
+		while ( *ch != 0 ) {
+		    if ( *ch == '_' ) *ch = '-';
+		    else if ( *ch == '.' ) {
+			*ch = 0x0;
+			break;
+		    }
+		    ch++;
+		}
+
+		_wtsprintf(filename, _WT("translate/%s.lang"), buff);
+
+#endif
+		
+		_wtprintf( _WT("lang filename is: %s\n"), filename );
+
+		FILE* f = _wtopen( filename, _WT("r") );
+		if (f != NULL)
+		{
+			_wtprintf( _WT("lang file is open: %s\n"), filename );
+			fclose(f);
+		}
+		else {
+			_wtprintf( _WT("lang file is not open: %s\n"), filename );
+		}
+		
+}
+
 
 enum COLORS {
 	NC=-1,
@@ -118,6 +179,8 @@ enum COLORS {
 	CYAN,
 	WHITE,
 };
+
+
 
 /**
 * Colorize terminal colors ANSI escape sequences.
@@ -332,7 +395,8 @@ loop:
 				if ( dayofweek == 4 ) _wtprintf( _WT("пятница %04u"), i );
 				if ( dayofweek == 5 ) _wtprintf( _WT("суббота %04u"), i );
 				if ( dayofweek == 6 ) _wtprintf( _WT("воскресенье %04u"), i );
-					_wtprintf( colorize( YELLOW, true ) );
+	
+				_wtprintf( colorize( YELLOW, true ) );
 
 				if ( i % 4 == 2 ) _wtprintf( _WT(" ( год ферма )\n") );
 				else _wtprintf( _WT("\n") );
@@ -419,6 +483,7 @@ loop2:
 	#endif
 	activateVirtualTerminal();    
 #endif
+	loadLocaleLang();
 			
 	_wtprintf( _WT("%s"), colorize( WHITE, true ) );
 	calendar();
