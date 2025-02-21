@@ -31,10 +31,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="translate\en-EN.lang">
+    <None Include="translate\ru-RU.lang">
       <Filter>Файлы ресурсов</Filter>
     </None>
-    <None Include="translate\ru-RU.lang">
+    <None Include="translate\en-US.lang">
       <Filter>Файлы ресурсов</Filter>
     </None>
   </ItemGroup>

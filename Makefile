@@ -1,4 +1,4 @@
 all:
-	g++ calendar.cpp -o calendar
+	g++ calendar.cpp -o calendar.out
 clean:
-	rm ./calendar
+	rm calendar.out

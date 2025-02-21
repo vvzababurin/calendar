@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdio.h>
+#include <memory.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string>
@@ -14,6 +15,8 @@
 #include <fcntl.h>
 
 #define _MYUNICODE
+
+unsigned int default_lang = false;
 
 
 #ifdef _WIN32
@@ -79,6 +82,8 @@ char getch(void)
 	#define _wtgetch _getch
 	#define _wtoupper towupper
 	#define _wtopen _wfopen
+	#define _wttell ftell
+	#define _wtseek fseek
 #else
 	#define _wtsprintf sprintf
 	#define _wtprintf printf
@@ -86,6 +91,8 @@ char getch(void)
 	#define _wtgetch getch
 	#define _wtoupper toupper
 	#define _wtopen fopen
+	#define _wttell ftell
+	#define _wtseek fseek
 #endif
 
 #else 
@@ -101,6 +108,8 @@ char getch(void)
 	#define _wtgetch _getch
 	#define _wtoupper toupper
 	#define _wtopen fopen
+	#define _wttell ftell
+	#define _wtseek fseek
 #else
 	#define _wtsprintf sprintf
 	#define _wtprintf printf
@@ -108,6 +117,8 @@ char getch(void)
 	#define _wtgetch getch
 	#define _wtoupper toupper
 	#define _wtopen fopen
+	#define _wttell ftell
+	#define _wtseek fseek
 #endif
 
 #endif
@@ -118,6 +129,7 @@ char getch(void)
 void loadLocaleLang()
 {
 		static WTCHAR filename[256];
+		memset(filename, 0, sizeof(WTCHAR) * 256);
 
 #ifdef _WIN32
 	#ifdef _MYUNICODE
@@ -127,46 +139,62 @@ void loadLocaleLang()
 	#endif
 		if (nLocaleInfo > 0) {
 			WTCHAR* buff = (WTCHAR*)malloc((nLocaleInfo + 1) * sizeof(WTCHAR));
-	#ifdef _MYUNICODE			
-			GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
-	#else
-			GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
-	#endif
-			_wtsprintf(filename, _WT("translate/%s.lang"), buff);
-
-			free(buff);
+			if (buff) {
+#ifdef _MYUNICODE			
+				GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
+#else
+				GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
+#endif
+				_wtsprintf(filename, _WT("translate/%s.lang"), buff);
+				free(buff);
+			}
+			else 
+			{
+				// TODO: fatal crash
+			}
+		} 
+		else
+		{
+			_wtsprintf(filename, _WT("translate/en-US.lang"));
 		}
 #else
 		char* buff = getenv("LANG");
-
-		char* ch = buff;
-		while ( *ch != 0 ) {
-		    if ( *ch == '_' ) *ch = '-';
-		    else if ( *ch == '.' ) {
-			*ch = 0x0;
-			break;
-		    }
-		    ch++;
+		if ( strlen(buff) > 0 )
+		{
+			char* ch = buff;
+			while (*ch != 0) {
+				if (*ch == '_') *ch = '-';
+				else if (*ch == '.') {
+					*ch = 0x0;
+					break;
+				}
+				ch++;
+			}
+			_wtsprintf(filename, _WT("translate/%s.lang"), buff);
 		}
-
-		_wtsprintf(filename, _WT("translate/%s.lang"), buff);
-
+		else
+		{
+			_wtsprintf(filename, _WT("translate/en-US.lang"));
+		}		
 #endif
 		
 		_wtprintf( _WT("lang filename is: %s\n"), filename );
 
 		FILE* f = _wtopen( filename, _WT("r") );
-		if (f != NULL)
+		if (f == NULL) {
+			default_lang = true;
+		}
+		else 
 		{
-			_wtprintf( _WT("lang file is open: %s\n"), filename );
-			fclose(f);
-		}
-		else {
-			_wtprintf( _WT("lang file is not open: %s\n"), filename );
-		}
-		
-}
+			default_lang = false;
 
+			_wtseek( f, 0, SEEK_END );
+			long int nbytes = _wttell(f);
+			_wtseek( f, 0, SEEK_SET );
+			_wtprintf( _WT("lang file is open ( %d ): %s\n"), nbytes, filename );
+			fclose(f);
+		} 
+}
 
 enum COLORS {
 	NC=-1,
@@ -179,8 +207,6 @@ enum COLORS {
 	CYAN,
 	WHITE,
 };
-
-
 
 /**
 * Colorize terminal colors ANSI escape sequences.

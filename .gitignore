@@ -32,3 +32,8 @@
 *.app
 
 .vs
+.x64
+Debug
+Release
+
+calendar.out
