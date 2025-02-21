@@ -32,8 +32,10 @@
 *.app
 
 .vs
-.x64
+.Win32
+ipch
+x64
 Debug
 Release
 
-calendar.out
+calendar/calendar.out
