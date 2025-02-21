@@ -31,11 +31,17 @@
 *.out
 *.app
 
+*.opensdf
+*.sdf
+*.suo
+
 .vs
 Win32
 ipch
 x64
+x86
 Debug
 Release
+output
 
 calendar/calendar.out
