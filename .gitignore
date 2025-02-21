@@ -31,9 +31,9 @@
 *.out
 *.app
 
-*.opensdf
-*.sdf
-*.suo
+calendar.opensdf
+calendar.sdf
+calendar.suo
 
 .vs
 Win32
