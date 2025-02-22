@@ -84,6 +84,8 @@ char getch(void)
 	#define _wttell ftell
 	#define _wtseek fseek
 	#define _wtread fread
+	#define _wtstrlen wcslen
+	#define _wtstrcmp wcscmp
 #else
 	#define _wtsprintf sprintf
 	#define _wtprintf printf
@@ -94,6 +96,8 @@ char getch(void)
 	#define _wttell ftell
 	#define _wtseek fseek
 	#define _wtread fread
+	#define _wtstrlen strlen
+	#define _wtstrcmp strcmp
 #endif
 
 #else 
@@ -112,6 +116,8 @@ char getch(void)
 	#define _wttell ftell
 	#define _wtseek fseek
 	#define _wtread fread
+	#define _wtstrlen strlen
+	#define _wtstrcmp strcmp
 #else
 	#define _wtsprintf sprintf
 	#define _wtprintf printf
@@ -122,96 +128,166 @@ char getch(void)
 	#define _wttell ftell
 	#define _wtseek fseek
 	#define _wtread fread
+	#define _wtstrlen strlen
+	#define _wtstrcmp strcmp
 #endif
 
 #endif
+
+typedef struct _translateLine
+{
+	WTCHAR* szName;
+	WTCHAR* szValue;
+} translateLine;
+
+translateLine lang[] = {
+	{ _WT("Label01"), _WT("Day of week to search ( -1 any, monday - 1, tuesday - 2, wednesday - 3 and so on ): ") },
+	{ _WT("Label02"), _WT("Number of days from date ( -1 doesn't matter ): ") },
+	{ _WT("Label03"), _WT("Year to search ( -1 any ): ") },
+	{ _WT("Label04"), _WT("Month to search ( -1 any ): ") },
+	{ _WT("Label05"), _WT("Day of month to search ( -1 any ): ") },
+	{ _WT("Label06"), _WT("%u days from the specified date is: \n") },
+	{ _WT("Label07"), _WT("( Ferma's day ) ") },
+	{ _WT("Label08"), _WT("January ") },
+	{ _WT("Label09"), _WT("February ") },
+	{ _WT("Label10"), _WT("March ") },
+	{ _WT("Label11"), _WT("April ") },
+	{ _WT("Label12"), _WT("May ") },
+	{ _WT("Label13"), _WT("June ") },
+	{ _WT("Label14"), _WT("July ") },
+	{ _WT("Label15"), _WT("August ") },
+	{ _WT("Label16"), _WT("September ") },
+	{ _WT("Label17"), _WT("October ") },
+	{ _WT("Label18"), _WT("November ") },
+	{ _WT("Label19"), _WT("December ") },
+	{ _WT("Label20"), _WT("( Ferma's month ) ") },
+	{ _WT("Label21"), _WT("monday %04u") },
+	{ _WT("Label22"), _WT("tuesday %04u") },
+	{ _WT("Label23"), _WT("wednesday %04u") },
+	{ _WT("Label24"), _WT("thursday %04u") },
+	{ _WT("Label25"), _WT("friday %04u") },
+	{ _WT("Label26"), _WT("saturday %04u") },
+	{ _WT("Label27"), _WT("sunday %04u") },
+	{ _WT("Label28"), _WT(" ( Ferma's year )\n") },
+	{ _WT("Label29"), _WT("%08u день от рождества христова, day of year %03u, %04u year\n") },
+	{ _WT("Label30"), _WT("month") },
+	{ _WT("Label31"), _WT(" ( Ferma's month )\n") },
+	{ _WT("Label32"), _WT("%04u - leap year\n") },
+	{ _WT("Label33"), _WT("%04u - not leap year\n") },
+	{ _WT("Label34"), _WT("Ferma's day from день ферма от рождества христова") },
+	{ _WT("Label35"), _WT("Outcomes including ( %04u ):\n") },
+	{ _WT("Label36"), _WT("%u Leap years\n") },
+	{ _WT("Label37"), _WT("%u Not leap years\n") },
+	{ _WT("Label38"), _WT("Recalculation? ( y/n ): ") },
+	{ NULL, NULL }
+};
 
 //////////////////////////////////////////////////////
 // TODO: translate to other lang 
 //////////////////////////////////////////////////////
 void loadLocaleLang()
 {
-		static WTCHAR filename[256];
-		memset(filename, 0, sizeof(WTCHAR) * 256);
+	static WTCHAR filename[256];
+	memset(filename, 0, sizeof(WTCHAR) * 256);
 
 #ifdef _WIN32
 	#ifdef _MYUNICODE
-		int nLocaleInfo = GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, 0, 0);
+	int nLocaleInfo = GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, 0, 0);
 	#else
-		int nLocaleInfo = GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, 0, 0);
+	int nLocaleInfo = GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, 0, 0);
 	#endif
-		if (nLocaleInfo > 0) {
-			WTCHAR* buff = (WTCHAR*)malloc((nLocaleInfo + 1) * sizeof(WTCHAR));
-			if (buff) {
+	if (nLocaleInfo > 0) 
+	{
+		WTCHAR* buff = (WTCHAR*)malloc((nLocaleInfo + 1) * sizeof(WTCHAR));
+		if (buff) {
 #ifdef _MYUNICODE			
-				GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
+			GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
 #else
-				GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
+			GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
 #endif
-				_wtsprintf(filename, _WT("translate/%s.lang"), buff);
-				free(buff);
-			}
-			else 
-			{
-				// TODO: fatal crash
-			}
-		} 
-		else
-		{
-			_wtsprintf(filename, _WT("translate/en-US.lang"));
-		}
-#else
-		char* buff = getenv("LANG");
-		if ( strlen(buff) > 0 )
-		{
-			char* ch = buff;
-			while (*ch != 0) {
-				if (*ch == '_') *ch = '-';
-				else if (*ch == '.') {
-					*ch = 0x0;
-					break;
-				}
-				ch++;
-			}
 			_wtsprintf(filename, _WT("translate/%s.lang"), buff);
-		}
-		else
-		{
-			_wtsprintf(filename, _WT("translate/en-US.lang"));
-		}		
-#endif
-		
-		_wtprintf( _WT("lang filename is: %s\n"), filename );
-
-		FILE* f = _wtopen( filename, _WT("rb") );
-		if (f == NULL) {
-			default_lang = true;
+			free(buff);
 		}
 		else 
 		{
-			default_lang = false;
-
-			_wtseek( f, 0, SEEK_END );
-			long int nbytes = _wttell(f);
-
-			_wtseek( f, 0, SEEK_SET );
-			_wtprintf( _WT("lang file is open ( size is %d ): %s\n"), nbytes, filename );
-
-			void* buff = malloc( nbytes );
-
-			size_t rbytes = _wtread( buff, 1, nbytes, f ); 
-			if ( rbytes != nbytes ) {
-					_wtprintf( _WT("read file '%s' error\n"), filename );
-					default_lang = true;
-			} else {
-					default_lang = false;					
+			// TODO: fatal crash
+		}
+	} 
+	else
+	{
+		_wtsprintf(filename, _WT("translate/en-US.lang"));
+	}
+#else
+	WTCHAR* buff = getenv("LANG");
+	if ( _wtstrlen(buff) > 0 )
+	{
+		char* ch = buff;
+		while (*ch != 0) {
+			if (*ch == '_') *ch = '-';
+			else if (*ch == '.') {
+				*ch = 0x0;
+				break;
 			}
+			ch++;
+		}
+		_wtsprintf(filename, _WT("translate/%s.lang"), buff);
+	}
+	else
+	{
+		_wtsprintf(filename, _WT("translate/en-US.lang"));
+	}	
+	
+#endif
 
-			fclose(f);
+	FILE* f = _wtopen( filename, _WT("rb") );
+	if (f == NULL) 
+	{
+		default_lang = true;
+	}
+	else 
+	{
+		default_lang = false;
+
+		_wtseek( f, 0, SEEK_END );
+		long int nbytes = _wttell(f);
+
+		_wtseek( f, 0, SEEK_SET );
+		// _wtprintf( _WT("lang file is open ( size is %d ): %s\n"), nbytes, filename );
+
+		void* buff = malloc( nbytes );
+
+		size_t rbytes = _wtread( buff, 1, nbytes, f ); 
+		if ( rbytes != nbytes ) 
+		{
+			// _wtprintf( _WT("read file '%s' error\n"), filename );
+			default_lang = true;
 		} 
+		else 
+		{
+			default_lang = false;					
+		}
 
-		_wtprintf( _WT("default lang = %s\n"), ( default_lang == true ) ? _WT("true") : _WT("false") );
+		fclose(f);
+	} 
+
+	// _wtprintf( _WT("default lang = %s\n"), ( default_lang == true ) ? _WT("true") : _WT("false") );
 }
+
+WTCHAR* getValue( WTCHAR* label )
+{
+	int i = 0;
+
+	while( lang[i].szName != NULL )
+	{
+		if ( _wtstrcmp( label, lang[i].szName ) == 0 )
+			return lang[i].szValue;
+		i++;
+	}	
+	
+	return NULL;
+}
+
+#define _LBL(c)	 getValue(_WT(c))
 
 enum COLORS {
 	NC=-1,
@@ -306,19 +382,19 @@ loop:
 	// начало от рождения
 	///////////////////////////////////////////////////
 
-	_wtprintf( _WT("Искомый день недели ( -1 - любой, понедельник - 1, вторник - 2, среда - 3 и т.д. ): ") );
+	_wtprintf( _LBL("Label01") );
 	_wtscanf( _WT("%d"), &dw );
 
-	_wtprintf( _WT("Количество дней с даты ( -1 всё равно ): ") );
+	_wtprintf( _LBL("Label02") );
 	_wtscanf( _WT("%d"), &dd );
 
-	_wtprintf( _WT("Искомый год ( -1 любой ): ") );
+	_wtprintf( _LBL("Label03") );
 	_wtscanf( _WT("%d"), &sy );
 
-	_wtprintf( _WT("Искомый месяц ( -1 любой ): ") );
+	_wtprintf( _LBL("Label04") );
 	_wtscanf( _WT("%d"), &sm );
 
-	_wtprintf( _WT("Искомый день месяца ( -1 любой ): ") );
+	_wtprintf( _LBL("Label05") );
 	_wtscanf( _WT("%d"), &sd );
 
 	_wtprintf( _WT("\n") );
@@ -400,7 +476,7 @@ loop:
 
 				_wtprintf( colorize( WHITE, true ) );
 
-				if ( dd == cd )  _wtprintf( _WT("%u дней с вышеуказанной даты это: \n"), dd );
+				if ( dd == cd )  _wtprintf( _LBL("Label06"), dd );
 					   
 				_wtprintf( colorize( WHITE, true ) );
 
@@ -408,67 +484,67 @@ loop:
 
 				_wtprintf( colorize( GREEN, true ) );
 
-				if ( dayofmonth % 4 == 2 ) _wtprintf( _WT("( день ферма ) ") );
+				if ( dayofmonth % 4 == 2 ) _wtprintf( _LBL("Label07") );
 
 				_wtprintf( colorize( WHITE, true ) );
 
-				if ( monthofyear == 0 ) _wtprintf( _WT("января ") );
-				if ( monthofyear == 1 ) _wtprintf( _WT("февраля ") );
-				if ( monthofyear == 2 ) _wtprintf( _WT("марта ") );
-				if ( monthofyear == 3 ) _wtprintf( _WT("апреля ") );
-				if ( monthofyear == 4 ) _wtprintf( _WT("мая ") );
-				if ( monthofyear == 5 ) _wtprintf( _WT("июня ") );
-				if ( monthofyear == 6 ) _wtprintf( _WT("июля ") );
-				if ( monthofyear == 7 ) _wtprintf( _WT("августа ") );
-				if ( monthofyear == 8 ) _wtprintf( _WT("сентября ") );
-				if ( monthofyear == 9 ) _wtprintf( _WT("октября ") );
-				if ( monthofyear == 10 ) _wtprintf( _WT("ноября ") );
-				if ( monthofyear == 11 ) _wtprintf( _WT("декабря ") );
+				if ( monthofyear == 0 ) _wtprintf( _LBL("Label08") );
+				if ( monthofyear == 1 ) _wtprintf( _LBL("Label09") );
+				if ( monthofyear == 2 ) _wtprintf( _LBL("Label10") );
+				if ( monthofyear == 3 ) _wtprintf( _LBL("Label11") );
+				if ( monthofyear == 4 ) _wtprintf( _LBL("Label12") );
+				if ( monthofyear == 5 ) _wtprintf( _LBL("Label13") );
+				if ( monthofyear == 6 ) _wtprintf( _LBL("Label14") );
+				if ( monthofyear == 7 ) _wtprintf( _LBL("Label15") );
+				if ( monthofyear == 8 ) _wtprintf( _LBL("Label16") );
+				if ( monthofyear == 9 ) _wtprintf( _LBL("Label17") );
+				if ( monthofyear == 10 ) _wtprintf( _LBL("Label18") );
+				if ( monthofyear == 11 ) _wtprintf( _LBL("Label19") );
 
 				_wtprintf( colorize( RED, true ) );
 
-				if ( ( monthofyear + 1 ) % 4 == 2 ) _wtprintf( _WT("( месяц ферма ) ") );
+				if ( ( monthofyear + 1 ) % 4 == 2 ) _wtprintf( _LBL("Label20") );
 
 				_wtprintf( colorize( WHITE, true ) );
 
-				if ( dayofweek == 0 ) _wtprintf( _WT("понедельник %04u"), i );
-				if ( dayofweek == 1 ) _wtprintf( _WT("вторник %04u"), i );
-				if ( dayofweek == 2 ) _wtprintf( _WT("среда %04u"), i );
-				if ( dayofweek == 3 ) _wtprintf( _WT("четверг %04u"), i );
-				if ( dayofweek == 4 ) _wtprintf( _WT("пятница %04u"), i );
-				if ( dayofweek == 5 ) _wtprintf( _WT("суббота %04u"), i );
-				if ( dayofweek == 6 ) _wtprintf( _WT("воскресенье %04u"), i );
+				if ( dayofweek == 0 ) _wtprintf( _LBL("Label21"), i );
+				if ( dayofweek == 1 ) _wtprintf( _LBL("Label22"), i );
+				if ( dayofweek == 2 ) _wtprintf( _LBL("Label23"), i );
+				if ( dayofweek == 3 ) _wtprintf( _LBL("Label24"), i );
+				if ( dayofweek == 4 ) _wtprintf( _LBL("Label25"), i );
+				if ( dayofweek == 5 ) _wtprintf( _LBL("Label26"), i );
+				if ( dayofweek == 6 ) _wtprintf( _LBL("Label27"), i );
 	
 				_wtprintf( colorize( YELLOW, true ) );
 
-				if ( i % 4 == 2 ) _wtprintf( _WT(" ( год ферма )\n") );
+				if ( i % 4 == 2 ) _wtprintf( _LBL("Label28") );
 				else _wtprintf( _WT("\n") );
 
 				_wtprintf( colorize( YELLOW, true ) );
 
-				_wtprintf( _WT("%08u день от рождества христова, день года %03u, %04u год\n"), dc, j, i );
+				_wtprintf( _LBL("Label29"), dc, j, i );
 
 				_wtprintf( colorize( WHITE, true ) );
 
 				int mt = i * 12 + (monthofyear + 1);
 
-				_wtprintf( _WT("%08u - %s"), mt, _WT("месяц") );
+				_wtprintf( _WT("%08u - %s"), mt, _LBL("Label30") );
 
 				_wtprintf( colorize( BLUE, true ) );
 
-				if (mt % 4 == 2) _wtprintf( _WT(" ( месяц ферма )\n") );
+				if (mt % 4 == 2) _wtprintf( _LBL("Label31") );
 				else _wtprintf(_WT("\n"));
 
 				_wtprintf( colorize( CYAN, true ) );
 
 				if (v29 == 1)
-					_wtprintf(_WT("%04u - високосный\n"), i);
+					_wtprintf( _LBL("Label32"), i);
 				else
-					_wtprintf(_WT("%04u - не високосный\n"), i);
+					_wtprintf( _LBL("Label33"), i);
 			
 				_wtprintf( colorize( MAGENTA, true ) );
 
-				if ( dc % 4 == 2 ) _wtprintf( _WT("%08u - %s\n"), dc, _WT("день ферма от рождества христова") );
+				if ( dc % 4 == 2 ) _wtprintf( _WT("%08u - %s\n"), dc, _LBL("Label34") );
 
 				_wtprintf( _WT("\n") );
 			}
@@ -479,14 +555,14 @@ loop:
 
 	_wtprintf( colorize( WHITE, true ) );
 
-	_wtprintf( _WT("Итого, включая ( %04u ):\n"), maxyear );
-	_wtprintf( _WT("Високосных %u лет\n"), vvy );
-	_wtprintf( _WT("Не високосных %u лет\n"), nvy );
+	_wtprintf( _LBL("Label35"), maxyear );
+	_wtprintf( _LBL("Label36"), vvy );
+	_wtprintf(_LBL("Label37"), nvy );
 
 	_wtprintf( _WT("\n") );
 
 loop2:
-	_wtprintf( _WT("Повторить раcчёт? ( y/n ): ") );
+	_wtprintf( _LBL("Label38") );
 
 	wch = _wtgetch();  
 	wch = _wtoupper( wch );
@@ -526,6 +602,7 @@ loop2:
 	#endif
 	activateVirtualTerminal();    
 #endif
+
 	loadLocaleLang();
 			
 	_wtprintf( _WT("%s"), colorize( WHITE, true ) );
