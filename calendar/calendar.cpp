@@ -169,16 +169,17 @@ translateLine lang[] = {
 	{ _WT("Label26"), _WT("saturday %04u") },
 	{ _WT("Label27"), _WT("sunday %04u") },
 	{ _WT("Label28"), _WT(" ( Ferma's year )\n") },
-	{ _WT("Label29"), _WT("%08u день от рождества христова, day of year %03u, %04u year\n") },
+	{ _WT("Label29"), _WT("%08u days from the birth of Christ, day of year %03u, %04u year\n") },
 	{ _WT("Label30"), _WT("month") },
 	{ _WT("Label31"), _WT(" ( Ferma's month )\n") },
 	{ _WT("Label32"), _WT("%04u - leap year\n") },
 	{ _WT("Label33"), _WT("%04u - not leap year\n") },
-	{ _WT("Label34"), _WT("Ferma's day from день ферма от рождества христова") },
+	{ _WT("Label34"), _WT("Ferma's day from the birth of Christ") },
 	{ _WT("Label35"), _WT("Outcomes including ( %04u ):\n") },
 	{ _WT("Label36"), _WT("%u Leap years\n") },
 	{ _WT("Label37"), _WT("%u Not leap years\n") },
 	{ _WT("Label38"), _WT("Recalculation? ( y/n ): ") },
+	{ _WT("Label39"), _WT("%08u - %s") },
 	{ NULL, NULL }
 };
 
@@ -240,45 +241,36 @@ void loadLocaleLang()
 #endif
 
 	FILE* f = _wtopen( filename, _WT("rb") );
-	if (f == NULL) 
-	{
+	if (f == NULL) {
 		default_lang = true;
-	}
-	else 
-	{
+	} else {
 		default_lang = false;
 
 		_wtseek( f, 0, SEEK_END );
 		long int nbytes = _wttell(f);
 
 		_wtseek( f, 0, SEEK_SET );
-		// _wtprintf( _WT("lang file is open ( size is %d ): %s\n"), nbytes, filename );
 
 		void* buff = malloc( nbytes );
 
 		size_t rbytes = _wtread( buff, 1, nbytes, f ); 
-		if ( rbytes != nbytes ) 
-		{
-			// _wtprintf( _WT("read file '%s' error\n"), filename );
+		if ( rbytes != nbytes ) {
 			default_lang = true;
-		} 
-		else 
-		{
+		} else {
 			default_lang = false;					
 		}
 
 		fclose(f);
 	} 
 
-	// _wtprintf( _WT("default lang = %s\n"), ( default_lang == true ) ? _WT("true") : _WT("false") );
+	_wtprintf( _WT("default lang = %s\n"), ( default_lang == true ) ? _WT("true") : _WT("false") );
 }
 
 WTCHAR* getValue( WTCHAR* label )
 {
 	int i = 0;
 
-	while( lang[i].szName != NULL )
-	{
+	while( lang[i].szName != NULL ) {
 		if ( _wtstrcmp( label, lang[i].szName ) == 0 )
 			return lang[i].szValue;
 		i++;
@@ -287,7 +279,20 @@ WTCHAR* getValue( WTCHAR* label )
 	return NULL;
 }
 
-#define _LBL(c)	 getValue(_WT(c))
+void setValue( const WTCHAR* label, WTCHAR* value )
+{
+	int i = 0;
+	while( lang[i].szName != NULL ) {
+		if ( _wtstrcmp( label, lang[i].szName ) == 0 ) {
+			lang[i].szValue = value;
+			break;
+		}
+		i++;
+	}
+}
+
+#define _LBL(c)				getValue( _WT(c) )
+#define _STLBL(c,e)			setValue( _WT(c), _WT(e) )
 
 enum COLORS {
 	NC=-1,
@@ -528,12 +533,12 @@ loop:
 
 				int mt = i * 12 + (monthofyear + 1);
 
-				_wtprintf( _WT("%08u - %s"), mt, _LBL("Label30") );
+				_wtprintf( _LBL("Label39"), mt, _LBL("Label30") );
 
 				_wtprintf( colorize( BLUE, true ) );
 
 				if (mt % 4 == 2) _wtprintf( _LBL("Label31") );
-				else _wtprintf(_WT("\n"));
+				else _wtprintf( _WT("\n") );
 
 				_wtprintf( colorize( CYAN, true ) );
 
@@ -544,8 +549,7 @@ loop:
 			
 				_wtprintf( colorize( MAGENTA, true ) );
 
-				if ( dc % 4 == 2 ) _wtprintf( _WT("%08u - %s\n"), dc, _LBL("Label34") );
-
+				if ( dc % 4 == 2 ) _wtprintf( _LBL("Label39"), dc, _LBL("Label34") );
 				_wtprintf( _WT("\n") );
 			}
         
