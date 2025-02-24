@@ -1,39 +1,39 @@
-_WT("Label01"): _WT("Day of week to search ( -1 any, monday - 1, tuesday - 2, wednesday - 3 and so on ): ")
-_WT("Label02"): _WT("Number of days from date ( -1 doesn't matter ): ")
-_WT("Label03"): _WT("Year to search ( -1 any ): ")
-_WT("Label04"): _WT("Month to search ( -1 any ): ")
-_WT("Label05"): _WT("Day of month to search ( -1 any ): ")
-_WT("Label06"): _WT("%u days from the specified date is: \n")
-_WT("Label07"): _WT("( Ferma's day ) ")
-_WT("Label08"): _WT("January ")
-_WT("Label09"): _WT("February ")
-_WT("Label10"): _WT("March ")
-_WT("Label11"): _WT("April ")
-_WT("Label12"): _WT("May ")
-_WT("Label13"): _WT("June ")
-_WT("Label14"): _WT("July ")
-_WT("Label15"): _WT("August ")
-_WT("Label16"): _WT("September ")
-_WT("Label17"): _WT("October ")
-_WT("Label18"): _WT("November ")
-_WT("Label19"): _WT("December ")
-_WT("Label20"): _WT("( Ferma's month ) ")
-_WT("Label21"): _WT("monday %04u")
-_WT("Label22"): _WT("tuesday %04u")
-_WT("Label23"): _WT("wednesday %04u")
-_WT("Label24"): _WT("thursday %04u")
-_WT("Label25"): _WT("friday %04u")
-_WT("Label26"): _WT("saturday %04u")
-_WT("Label27"): _WT("sunday %04u")
-_WT("Label28"): _WT(" ( Ferma's year )\n")
-_WT("Label29"): _WT("%08u days from the birth of Christ, day of year %03u, %04u year\n")
-_WT("Label30"): _WT("month")
-_WT("Label31"): _WT(" ( Ferma's month )\n")
-_WT("Label32"): _WT("%04u - leap year\n")
-_WT("Label33"): _WT("%04u - not leap year\n")
-_WT("Label34"): _WT("Ferma's day from the birth of Christ")
-_WT("Label35"): _WT("Outcomes including ( %04u ):\n")
-_WT("Label36"): _WT("%u Leap years\n")
-_WT("Label37"): _WT("%u Not leap years\n")
-_WT("Label38"): _WT("Recalculation? ( y/n ): ")
-_WT("Label39"): _WT("%08u - %s")
+"Label01": "Day of week to search ( -1 any, monday - 1, tuesday - 2, wednesday - 3 and so on : "
+"Label02": "Number of days from date ( -1 doesn't matter : "
+"Label03": "Year to search ( -1 any : "
+"Label04": "Month to search ( -1 any : "
+"Label05": "Day of month to search ( -1 any : "
+"Label06": "%u days from the specified date is: \n"
+"Label07": "( Ferma's day ) "
+"Label08": "January "
+"Label09": "February "
+"Label10": "March "
+"Label11": "April "
+"Label12": "May "
+"Label13": "June "
+"Label14": "July "
+"Label15": "August "
+"Label16": "September "
+"Label17": "October "
+"Label18": "November "
+"Label19": "December "
+"Label20": "( Ferma's month ) "
+"Label21": "monday %04u"
+"Label22": "tuesday %04u"
+"Label23": "wednesday %04u"
+"Label24": "thursday %04u"
+"Label25": "friday %04u"
+"Label26": "saturday %04u"
+"Label27": "sunday %04u"
+"Label28": " ( Ferma's year )\n"
+"Label29": "%08u days from the birth of Christ, day of year %03u, %04u year\n"
+"Label30": "month"
+"Label31": " ( Ferma's month )\n"
+"Label32": "%04u - leap year\n"
+"Label33": "%04u - not leap year\n"
+"Label34": "Ferma's day from the birth of Christ"
+"Label35": "Outcomes including ( %04u :\n"
+"Label36": "%u Leap years\n"
+"Label37": "%u Not leap years\n"
+"Label38": "Recalculation? ( y/n ): "
+"Label39": "%08u - %s"

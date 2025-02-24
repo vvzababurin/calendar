@@ -16,7 +16,7 @@
 
 #define _MYUNICODE
 
-bool default_lang = false;
+bool default_lang = true;
 
 #ifdef _WIN32
 
@@ -239,29 +239,40 @@ void loadLocaleLang()
 	}	
 	
 #endif
+	void* buff = NULL;
 
 	FILE* f = _wtopen( filename, _WT("rb") );
-	if (f == NULL) {
-		default_lang = true;
-	} else {
+	if (f != NULL) {
 		default_lang = false;
-
 		_wtseek( f, 0, SEEK_END );
 		long int nbytes = _wttell(f);
-
 		_wtseek( f, 0, SEEK_SET );
-
-		void* buff = malloc( nbytes );
-
+		buff = malloc( nbytes );
 		size_t rbytes = _wtread( buff, 1, nbytes, f ); 
-		if ( rbytes != nbytes ) {
-			default_lang = true;
-		} else {
-			default_lang = false;					
-		}
-
+		if ( rbytes != nbytes ) default_lang = true;
 		fclose(f);
 	} 
+
+	int bs = 0;
+	int dq = 0;
+
+	if ( default_lang == false ) {
+		char* ch = (char*)buff;
+		do {
+			if ( *ch == '\\' && bs == 0 ) {
+				bs = 1;
+				ch++;
+				continue;
+			}
+			if ( *ch == '"' && bs == 1 ) {
+			
+			} 
+		
+			if ( bs == 1 ) bs = 0;
+			ch++;
+		} while( *ch != NULL );
+		if ( buff != NULL ) free( buff );
+	}
 
 	_wtprintf( _WT("default lang = %s\n"), ( default_lang == true ) ? _WT("true") : _WT("false") );
 }
@@ -269,13 +280,11 @@ void loadLocaleLang()
 WTCHAR* getValue( WTCHAR* label )
 {
 	int i = 0;
-
 	while( lang[i].szName != NULL ) {
 		if ( _wtstrcmp( label, lang[i].szName ) == 0 )
 			return lang[i].szValue;
 		i++;
 	}	
-	
 	return NULL;
 }
 
@@ -291,8 +300,8 @@ void setValue( const WTCHAR* label, WTCHAR* value )
 	}
 }
 
-#define _LBL(c)				getValue( _WT(c) )
-#define _STLBL(c,e)			setValue( _WT(c), _WT(e) )
+#define _LBL(c)				getValue(_WT(c))
+#define _STLBL(c,e)			setValue(_WT(c),_WT(e))
 
 enum COLORS {
 	NC=-1,
@@ -319,17 +328,12 @@ enum COLORS {
 const WTCHAR *colorize(int font, bool fintensity = false, int back = -1, bool bintensity = false, int style = -1) 
 {
 	static WTCHAR code[20];
-    
 	if (font >= 0) font += 30;
 	else font = 0;
-
 	if ( fintensity ) font += 60;
-
 	if (back >= 0) back += 40;
 	else back = 0;
-
 	if ( bintensity ) back += 60;
-
 	if (back > 0 && style > 0) {
 		_wtsprintf( code, _WT("\033[%d;%d;%dm"), font, back, style );
 	} else if (back > 0) {
@@ -337,7 +341,6 @@ const WTCHAR *colorize(int font, bool fintensity = false, int back = -1, bool bi
 	} else {
 		_wtsprintf( code, _WT("\033[%dm"), font );
 	}
-
 	return code;
 }
 
@@ -346,7 +349,6 @@ void calendar()
 	int dayofweek = 4;
 	int monthofyear = 0;
 	int dayofmonth = 0;
-
 	int sy = -1;
 	int sd = -1;
 	int sm = -1;
@@ -355,19 +357,14 @@ void calendar()
 	int dd = -1;
 	int cd = 0;
 	int v29 = 0;
-
 	int vvy = 0;
 	int nvy = 0;
-
 	int dc = 0;
-
 	WTCHAR wch = 'y';
-
 loop:
 	dayofweek = 4;
 	monthofyear = 0;
 	dayofmonth = 0;
-
 	sy = -1;
 	sd = -1;
 	sm = -1;
@@ -375,45 +372,31 @@ loop:
 	ef = -1;
 	cd = 0;
 	v29 = 0;
-
 	vvy = 0;
 	nvy = 0;
-
 	dc = 0;
-
 	wch = 'y';
-
 	///////////////////////////////////////////////////
 	// начало от рождения
 	///////////////////////////////////////////////////
-
 	_wtprintf( _LBL("Label01") );
 	_wtscanf( _WT("%d"), &dw );
-
 	_wtprintf( _LBL("Label02") );
 	_wtscanf( _WT("%d"), &dd );
-
 	_wtprintf( _LBL("Label03") );
 	_wtscanf( _WT("%d"), &sy );
-
 	_wtprintf( _LBL("Label04") );
 	_wtscanf( _WT("%d"), &sm );
-
 	_wtprintf( _LBL("Label05") );
 	_wtscanf( _WT("%d"), &sd );
-
 	_wtprintf( _WT("\n") );
-
 	/////////////////////////////////////////////////////////
 	// FILE* f = _wfreopen(L"calendar.out", L"w", stdout);
 	/////////////////////////////////////////////////////////
-
 	dw = ( dw != -1 ) ? --dw : dw;
 	sm = ( sm != -1 ) ? --sm : sm;
-
 	time_t ctime = time( NULL );
 	time_t maxyear = 1970 + ctime / 31537970;
-
 	for ( int i = 0; i <= maxyear; i++ ) 
 	{
 		if ( i % 4 == 0 ) {
@@ -423,9 +406,7 @@ loop:
 			v29 = 0;        
 			nvy++;
 		}
-
 		int maxdays = (v29 == 1) ? 366 : 365;
-
 		for ( int j = 1; j <= maxdays; j++ ) 
 		{                            
 			if ( monthofyear == 0 && dayofmonth == 31 ) {
@@ -465,34 +446,22 @@ loop:
 				monthofyear = 0;
 				dayofmonth = 0;
 			}
-
 			dc++;
 			dayofmonth++;
-
 			if ( ef == 1 ) cd = cd + 1;
-
 			if ( ( ( dw == dayofweek || dw == -1 ) &&
 				( sy == i || sy == -1 ) && 
 				( sm == monthofyear || sm == -1 ) &&
 				( sd == dayofmonth || sd == -1 ) ) || ( dd == cd ) ) 
 			{
-            
 				ef = 1;
-
 				_wtprintf( colorize( WHITE, true ) );
-
 				if ( dd == cd )  _wtprintf( _LBL("Label06"), dd );
-					   
 				_wtprintf( colorize( WHITE, true ) );
-
 				_wtprintf( _WT("%02u "), dayofmonth );
-
 				_wtprintf( colorize( GREEN, true ) );
-
 				if ( dayofmonth % 4 == 2 ) _wtprintf( _LBL("Label07") );
-
 				_wtprintf( colorize( WHITE, true ) );
-
 				if ( monthofyear == 0 ) _wtprintf( _LBL("Label08") );
 				if ( monthofyear == 1 ) _wtprintf( _LBL("Label09") );
 				if ( monthofyear == 2 ) _wtprintf( _LBL("Label10") );
@@ -505,13 +474,9 @@ loop:
 				if ( monthofyear == 9 ) _wtprintf( _LBL("Label17") );
 				if ( monthofyear == 10 ) _wtprintf( _LBL("Label18") );
 				if ( monthofyear == 11 ) _wtprintf( _LBL("Label19") );
-
 				_wtprintf( colorize( RED, true ) );
-
 				if ( ( monthofyear + 1 ) % 4 == 2 ) _wtprintf( _LBL("Label20") );
-
 				_wtprintf( colorize( WHITE, true ) );
-
 				if ( dayofweek == 0 ) _wtprintf( _LBL("Label21"), i );
 				if ( dayofweek == 1 ) _wtprintf( _LBL("Label22"), i );
 				if ( dayofweek == 2 ) _wtprintf( _LBL("Label23"), i );
@@ -519,40 +484,26 @@ loop:
 				if ( dayofweek == 4 ) _wtprintf( _LBL("Label25"), i );
 				if ( dayofweek == 5 ) _wtprintf( _LBL("Label26"), i );
 				if ( dayofweek == 6 ) _wtprintf( _LBL("Label27"), i );
-	
 				_wtprintf( colorize( YELLOW, true ) );
-
 				if ( i % 4 == 2 ) _wtprintf( _LBL("Label28") );
 				else _wtprintf( _WT("\n") );
-
 				_wtprintf( colorize( YELLOW, true ) );
-
 				_wtprintf( _LBL("Label29"), dc, j, i );
-
 				_wtprintf( colorize( WHITE, true ) );
-
 				int mt = i * 12 + (monthofyear + 1);
-
 				_wtprintf( _LBL("Label39"), mt, _LBL("Label30") );
-
 				_wtprintf( colorize( BLUE, true ) );
-
 				if (mt % 4 == 2) _wtprintf( _LBL("Label31") );
 				else _wtprintf( _WT("\n") );
-
 				_wtprintf( colorize( CYAN, true ) );
-
 				if (v29 == 1)
 					_wtprintf( _LBL("Label32"), i);
 				else
 					_wtprintf( _LBL("Label33"), i);
-			
 				_wtprintf( colorize( MAGENTA, true ) );
-
 				if ( dc % 4 == 2 ) _wtprintf( _LBL("Label39"), dc, _LBL("Label34") );
 				_wtprintf( _WT("\n") );
 			}
-        
 			( dayofweek == 6 ) ? dayofweek = 0 : dayofweek++;
 		}
 	}
