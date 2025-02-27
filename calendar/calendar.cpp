@@ -22,6 +22,7 @@ bool default_lang = true;
 
 #include <io.h>
 #include <windows.h>
+#include <winnls.h>
 #include <conio.h>
 
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
@@ -86,6 +87,7 @@ char getch(void)
 	#define _wtread fread
 	#define _wtstrlen wcslen
 	#define _wtstrcmp wcscmp
+	#define _wtstrdup _wcsdup
 #else
 	#define _wtsprintf sprintf
 	#define _wtprintf printf
@@ -98,6 +100,7 @@ char getch(void)
 	#define _wtread fread
 	#define _wtstrlen strlen
 	#define _wtstrcmp strcmp
+	#define _wtstrdup strdup
 #endif
 
 #else 
@@ -118,6 +121,7 @@ char getch(void)
 	#define _wtread fread
 	#define _wtstrlen strlen
 	#define _wtstrcmp strcmp
+	#define _wtstrdup _strdup
 #else
 	#define _wtsprintf sprintf
 	#define _wtprintf printf
@@ -130,6 +134,7 @@ char getch(void)
 	#define _wtread fread
 	#define _wtstrlen strlen
 	#define _wtstrcmp strcmp
+	#define _wtstrdup strdup
 #endif
 
 #endif
@@ -183,6 +188,32 @@ translateLine lang[] = {
 	{ NULL, NULL }
 };
 
+WTCHAR* getValue( const WTCHAR* label )
+{
+	int i = 0;
+	while( lang[i].szName != NULL ) {
+		if ( _wtstrcmp( label, lang[i].szName ) == 0 )
+			return lang[i].szValue;
+		i++;
+	}	
+	return NULL;
+}
+
+void setValue( const WTCHAR* label, const WTCHAR* value )
+{
+	int i = 0;
+	while( lang[i].szName != NULL ) {
+		if ( _wtstrcmp( label, lang[i].szName ) == 0 ) {
+			lang[i].szValue = _wtstrdup( value );
+			break;
+		}
+		i++;
+	}
+}
+
+#define _LBL(c)				getValue(_WT(c))
+#define _STLBL(c,e)			setValue(_WT(c),_WT(e))
+
 //////////////////////////////////////////////////////
 // TODO: translate to other lang 
 //////////////////////////////////////////////////////
@@ -190,6 +221,8 @@ void loadLocaleLang()
 {
 	static WTCHAR filename[256];
 	memset(filename, 0, sizeof(WTCHAR) * 256);
+
+	WTCHAR* buff = NULL;
 
 #ifdef _WIN32
 	#ifdef _MYUNICODE
@@ -199,7 +232,7 @@ void loadLocaleLang()
 	#endif
 	if (nLocaleInfo > 0) 
 	{
-		WTCHAR* buff = (WTCHAR*)malloc((nLocaleInfo + 1) * sizeof(WTCHAR));
+		buff = (WTCHAR*)malloc((nLocaleInfo + 1) * sizeof(WTCHAR));
 		if (buff) {
 #ifdef _MYUNICODE			
 			GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNAME, buff, nLocaleInfo);
@@ -219,7 +252,7 @@ void loadLocaleLang()
 		_wtsprintf(filename, _WT("translate/en-US.lang"));
 	}
 #else
-	WTCHAR* buff = getenv("LANG");
+	buff = getenv("LANG");
 	if ( _wtstrlen(buff) > 0 )
 	{
 		char* ch = buff;
@@ -239,7 +272,6 @@ void loadLocaleLang()
 	}	
 	
 #endif
-	void* buff = NULL;
 
 	FILE* f = _wtopen( filename, _WT("rb") );
 	if (f != NULL) {
@@ -247,61 +279,108 @@ void loadLocaleLang()
 		_wtseek( f, 0, SEEK_END );
 		long int nbytes = _wttell(f);
 		_wtseek( f, 0, SEEK_SET );
-		buff = malloc( nbytes );
+		buff = (WTCHAR*)malloc( nbytes );
 		size_t rbytes = _wtread( buff, 1, nbytes, f ); 
 		if ( rbytes != nbytes ) default_lang = true;
 		fclose(f);
 	} 
 
-	int bs = 0;
-	int dq = 0;
+	int bs = 0;  // Backslash
+	int dq = 0;	 // Double quotas
+	int cr = 0;	 // CR
+	int lf = 0;	 // LF
+	int ff = 0;  // First flag name
 
-	if ( default_lang == false ) {
+	std::string t_name = "";
+	std::string t_value = "";
+	std::string tag = "";
+
+	if ( default_lang == false ) 
+	{
 		char* ch = (char*)buff;
 		do {
-			if ( *ch == '\\' && bs == 0 ) {
-				bs = 1;
-				ch++;
+			if ( bs == 0 ) 
+			{
+				if ( *ch == '\\' ) {
+					// set backslash is not null
+					bs = 1;
+					continue;
+				}
+				if ( *ch == '"' ) {		// "
+					dq++;
+					continue;
+				}
+				if ( *ch == ':' && dq != 1 ) {		// :
+					if ( dq == 2 ) {
+					   t_name = tag;
+					   tag = "";
+					   dq = 0;
+					}
+					continue;
+				}
+				if ( *ch == ' ' && dq != 1 ) {
+					continue;
+				}
+				if ( *ch == 0x0d ) {   // CR
+					cr = 1;
+					continue;
+				}
+				if ( *ch == 0x0a ) {   // LF
+					if ( dq == 2 ) {
+						t_value = tag;
+						tag = "";
+
+						#ifdef _MYUNICODE
+
+						std::wstring t_name_w;
+						std::wstring t_value_w;  
+
+						int wcount = 0;
+
+						wcount = MultiByteToWideChar(1251, 0, t_name.c_str(), -1, NULL, 0);
+						t_name_w.resize( wcount );
+						MultiByteToWideChar(1251, 0, t_name.c_str(), -1, &t_name_w[0], wcount);
+
+						wcount = MultiByteToWideChar(1251, 0, t_value.c_str(), -1, NULL, 0);
+						t_value_w.resize( wcount );
+						MultiByteToWideChar(1251, 0, t_value.c_str(), -1, &t_value_w[0], wcount);
+
+						setValue( t_name_w.c_str(), t_value_w.c_str() );
+						#else
+						setValue( t_name.c_str(), t_value.c_str() );
+						#endif
+
+						dq = 0;
+					}
+					cr = 0;
+					continue;
+				}
+
+				cr = 0;	 // CR
+				lf = 0;	 // LF
+				ff = 0;  // First flag name
+
+			} else if ( bs == 1 ) {
+				if ( *ch == 'n' ) {
+					tag += '\n';	
+				} else if( *ch == 'r' ) {
+					tag += '\r';	
+				} else if( *ch == 't' ) {
+					tag += '\t';	
+				}
+				bs = 0;			
 				continue;
 			}
-			if ( *ch == '"' && bs == 1 ) {
-			
-			} 
-		
-			if ( bs == 1 ) bs = 0;
-			ch++;
-		} while( *ch != NULL );
+
+			tag = tag + *ch;
+
+		} while( *(ch++) != NULL );
+
 		if ( buff != NULL ) free( buff );
 	}
 
-	_wtprintf( _WT("default lang = %s\n"), ( default_lang == true ) ? _WT("true") : _WT("false") );
+	// _wtprintf( _WT("default lang = %s\n"), ( default_lang == true ) ? _WT("true") : _WT("false") );
 }
-
-WTCHAR* getValue( WTCHAR* label )
-{
-	int i = 0;
-	while( lang[i].szName != NULL ) {
-		if ( _wtstrcmp( label, lang[i].szName ) == 0 )
-			return lang[i].szValue;
-		i++;
-	}	
-	return NULL;
-}
-
-void setValue( const WTCHAR* label, WTCHAR* value )
-{
-	int i = 0;
-	while( lang[i].szName != NULL ) {
-		if ( _wtstrcmp( label, lang[i].szName ) == 0 ) {
-			lang[i].szValue = value;
-			break;
-		}
-		i++;
-	}
-}
-
-#define _LBL(c)				getValue(_WT(c))
-#define _STLBL(c,e)			setValue(_WT(c),_WT(e))
 
 enum COLORS {
 	NC=-1,
@@ -484,7 +563,7 @@ loop:
 				if ( dayofweek == 4 ) _wtprintf( _LBL("Label25"), i );
 				if ( dayofweek == 5 ) _wtprintf( _LBL("Label26"), i );
 				if ( dayofweek == 6 ) _wtprintf( _LBL("Label27"), i );
-				_wtprintf( colorize( YELLOW, true ) );
+				_wtprintf( colorize( BLUE, true ) );
 				if ( i % 4 == 2 ) _wtprintf( _LBL("Label28") );
 				else _wtprintf( _WT("\n") );
 				_wtprintf( colorize( YELLOW, true ) );
